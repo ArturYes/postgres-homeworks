@@ -1,63 +1,30 @@
-"""Скрипт для заполнения данными таблиц в БД Postgres."""
 import csv
-
 import psycopg2
 
 
-# Подключение к базе данных
-conn = psycopg2.connect(host="localhost", database="north", user="postgres", password="20031981artur")
+def insert_data(table_name):
+    conn = psycopg2.connect(host="localhost", database="north", user="postgres", password="20031981artur")
+    conn.cursor()
+    try:
+        with conn:
+            with conn.cursor() as cursor:
+                with open(f'north_data/{table_name}_data.csv', 'r') as file:
+                    reader = csv.reader(file)
+                    next(reader)
+                    for row in reader:
+                        cursor.execute(
+                            f"INSERT INTO {table_name} VALUES ({', '.join(['%s']*len(row))})",
+                            row
+                        )
+    finally:
+        conn.close()
 
-cur = conn.cursor()
 
-try:
-    with conn:
-        with conn.cursor() as cursor:
-            with open('north_data/customers_data.csv', 'r') as file:
-                reader = csv.reader(file)
-                next(reader)
-                for row in reader:
-                    cursor.execute(
-                        "INSERT INTO customers (customer_id, company_name, contact_name) VALUES (%s, %s, %s)",
-                        row
-                    )
+tables = {
+    'customers': ('customer_id, company_name, contact_name',),
+    'employees': ('employee_id, last_name, first_name, hire_date, address, city',),
+    'orders': ('order_id, order_date, customer_id, employee_id, total',),
+}
 
-finally:
-    conn.close()
-
-conn = psycopg2.connect(host="localhost", database="north", user="postgres", password="20031981artur")
-
-cur = conn.cursor()
-
-try:
-    with conn:
-        with conn.cursor() as cursor:
-            with open('north_data/employees_data.csv', 'r') as file:
-                reader = csv.reader(file)
-                next(reader)
-                for row in reader:
-                    cursor.execute(
-                        "INSERT INTO employees VALUES (%s, %s, %s, %s, %s, %s)",
-                        row
-                    )
-
-finally:
-    conn.close()
-
-conn = psycopg2.connect(host="localhost", database="north", user="postgres", password="20031981artur")
-
-cur = conn.cursor()
-
-try:
-    with conn:
-        with conn.cursor() as cursor:
-            with open('north_data/orders_data.csv', 'r') as file:
-                reader = csv.reader(file)
-                next(reader)
-                for row in reader:
-                    cursor.execute(
-                        "INSERT INTO orders VALUES (%s, %s, %s, %s, %s)",
-                        row
-                    )
-
-finally:
-    conn.close()
+for table, columns in tables.items():
+    insert_data(table)
